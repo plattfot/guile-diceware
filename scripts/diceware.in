@@ -1,0 +1,109 @@
+#! /usr/bin/guile \
+--no-auto-compile -e main -s
+!#
+
+;; Diceware - Program for generating password using diceware,
+;; easy for humans to remember hard for a machine to crack.
+
+;; Copyright (C) 2020  Fredrik Salomonsson
+
+;; This file is part of baksnapper
+
+;; Baksnapper is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; Baksnapper is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+(use-modules
+ (ice-9 getopt-long)
+ (ice-9 format)
+ (ice-9 and-let-star)
+ (ice-9 textual-ports)
+ (ice-9 vlist)
+ (ice-9 regex)
+ (ice-9 readline)
+ (srfi srfi-1))
+
+(define (main args)
+  (let* ((option-spec
+          `((delimiter (single-char #\d) (value #t))
+            (version (value #f))
+            (help (single-char #\h) (value #f))))
+         (options (getopt-long (command-line) option-spec)))
+    (when (option-ref options 'help #f)
+      (format #t "\
+Usage: ~a [OPTIONS...] WORDLIST
+
+A simple passphrase generator using any set of dice. The concept is
+simple roll a die five times, combine the numbers from the die into a
+key and look up the word. Rinse and repeat until you are satisfied
+with the passphrase.
+
+For a secure passphrase it is recommended to use at least six words.
+
+The WORDLIST is a file, where each line contains a key and a word
+separated by whitespace or tab. The WORDLIST must contain a word for
+each combinations a five set dice can generate.
+
+Options:
+
+-d, --delimiter CHAR Set delimiter between the words to CHAR.
+-h, --help           Print this help and then exit.
+    --version        Print version and then exit.
+
+Author:
+~a~!
+"
+              (car (command-line))
+              @AUTHOR@)
+      (exit #t))
+    (when (option-ref options 'version #f)
+      (format #t "diceware-~a~%" @HVERSION@)
+      (exit #t))
+    (let ((hash
+           (fold (lambda (filename vhash)
+                   (and-let* ((port (open-input-file filename))
+                              (line (get-line port))
+                              (diceware-re (make-regexp "([1-6]+)[[:blank:]]+(.*)")))
+                     (while (not (eof-object? line))
+                       (and-let* ((diceware-match (regexp-exec diceware-re line)))
+                         ;; TODO combine multiple lists not overwrite
+                         (set! vhash (vhash-cons (match:substring diceware-match 1)
+                                                 (match:substring diceware-match 2)
+                                                 vhash
+                                                 string-hash)))
+                       (set! line (get-line port)))
+                     (close-port port)
+                     vhash))
+                 vlist-null
+                 (option-ref options '() '()))))
+      (format #t "Welcome to diceware (press Ctrl+d to exit)~%~%")
+      (let ((valid-key (make-regexp "[1-6]{5}"))
+            (delimiter (option-ref options 'delimiter " "))
+            (prompt "Please roll five dice and type in the number: "))
+        (let input ((key (readline prompt))
+                    (passphrase '()))
+          (when (eof-object? key)
+            (when (not (null? passphrase))
+              (format #t "Your passphrase is ~s~%" (string-join passphrase delimiter)))
+            (exit))
+          (if (regexp-exec valid-key key)
+              (begin
+                (let ((word (vhash-assoc key hash string=? string-hash)))
+                  (if word
+                      (begin
+                        (set! passphrase `(,@passphrase ,(cdr word)))
+                        (format #t "Current passphrase: ~a~%" (string-join passphrase delimiter))
+                        (input (readline prompt) passphrase))))
+                )
+              (begin
+                (format #t "Invalid key, please try again~%")
+                (input (readline prompt) passphrase))))))))

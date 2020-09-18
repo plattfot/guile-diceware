@@ -13,7 +13,8 @@
            ((scheme-file "diceware")
             (directory "diceware" ())))
          (tests ((directory "tests" ())))
-         (programs ((directory "scripts" ())))
+         (programs
+           ((directory "scripts" ((in-file "diceware")))))
          (documentation
            ((org-file "README")
             (symlink "README" "README.org")
@@ -21,6 +22,4 @@
             (text-file "COPYING")
             (directory "doc" ((texi-file "diceware")))))
          (infrastructure
-           ((scheme-file "guix")
-            (text-file ".gitignore")
-            (scheme-file "hall")))))
+           ((scheme-file "guix") (scheme-file "hall")))))
