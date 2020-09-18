@@ -14,7 +14,7 @@ using the [[https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt][EFF wo
 [[http://world.std.com/%7Ereinhold/beale.wordlist.asc][alternative Baele list]].
 
 
-```
+#+begin_src shell
 $ ./pre-inst-env scripts/diceware ~/Downloads/eff_large_wordlist.txt ~/Downloads/diceware.wordlist.asc  ~/Downloads/beale.wordlist.asc 
 Welcome to diceware (press Ctrl+d to exit)
 
@@ -35,5 +35,6 @@ Welcome to diceware (press Ctrl+d to exit)
 Your passphrase using eff_large_wordlist.txt is "freebee brought bleep"
 Your passphrase using diceware.wordlist.asc is "goode bird batik"
 Your passphrase using beale.wordlist.asc is "grady bits bay"
-```
+#+end_src
+
 
