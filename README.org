@@ -7,7 +7,7 @@ die or five.
 
 See [[HACKING]] on how to build diceware.
 
-## Example
+* Example
 
 Here is how it looks when generating a weak three word passphrase
 using the [[https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt][EFF wordlist]], the [[http://world.std.com/%7Ereinhold/diceware.wordlist.asc][Diceware list]] and the
