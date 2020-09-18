@@ -30,7 +30,15 @@
  (ice-9 vlist)
  (ice-9 regex)
  (ice-9 readline)
+ (srfi srfi-9)
+ (srfi srfi-43)
  (srfi srfi-1))
+
+(define-record-type <diceware>
+  (make-diceware name hash)
+  diceware?
+  (name diceware-name)
+  (hash diceware-hash))
 
 (define (main args)
   (let* ((option-spec
@@ -68,42 +76,60 @@ Author:
     (when (option-ref options 'version #f)
       (format #t "diceware-~a~%" @HVERSION@)
       (exit #t))
-    (let ((hash
-           (fold (lambda (filename vhash)
-                   (and-let* ((port (open-input-file filename))
+    (let ((dicewares
+           (list->vector
+            (map (lambda (filename)
+                   (and-let* ((vhash vlist-null)
+                              (port (open-input-file filename))
                               (line (get-line port))
                               (diceware-re (make-regexp "([1-6]+)[[:blank:]]+(.*)")))
                      (while (not (eof-object? line))
                        (and-let* ((diceware-match (regexp-exec diceware-re line)))
-                         ;; TODO combine multiple lists not overwrite
                          (set! vhash (vhash-cons (match:substring diceware-match 1)
                                                  (match:substring diceware-match 2)
                                                  vhash
                                                  string-hash)))
                        (set! line (get-line port)))
                      (close-port port)
-                     vhash))
-                 vlist-null
-                 (option-ref options '() '()))))
+                     (make-diceware (basename filename) vhash)))
+                 (option-ref options '() '())))))
       (format #t "Welcome to diceware (press Ctrl+d to exit)~%~%")
-      (let ((valid-key (make-regexp "[1-6]{5}"))
-            (delimiter (option-ref options 'delimiter " "))
-            (prompt "Please roll five dice and type in the number: "))
+      (let* ((valid-key (make-regexp "^[1-6]{5}$"))
+             (delimiter (option-ref options 'delimiter " "))
+             (prompt "-- Please roll five dice and type in the number: ")
+             (padding (vector-fold (lambda (i max-width diceware)
+                                     (max max-width (string-length (diceware-name diceware))))
+                                   0
+                                   dicewares))
+             (padded-fmt (format #f "~~~d@a" padding))
+             (padded-names (vector-map (lambda (i diceware)
+                                         (format #f padded-fmt (diceware-name diceware)))
+                                       dicewares)))
         (let input ((key (readline prompt))
-                    (passphrase '()))
+                    (passphrases (make-vector (vector-length dicewares) '())))
           (when (eof-object? key)
-            (when (not (null? passphrase))
-              (format #t "Your passphrase is ~s~%" (string-join passphrase delimiter)))
+            (format #t "~%")
+            (vector-for-each
+                 (lambda (i passphrase)
+                   (when (not (null? passphrase))
+                     (format #t "Your passphrase using ~a is ~s~%"
+                             (diceware-name (vector-ref dicewares i))
+                             (string-join passphrase delimiter))))
+                 passphrases)
             (exit))
           (if (regexp-exec valid-key key)
-              (begin
-                (let ((word (vhash-assoc key hash string=? string-hash)))
-                  (if word
-                      (begin
-                        (set! passphrase `(,@passphrase ,(cdr word)))
-                        (format #t "Current passphrase: ~a~%" (string-join passphrase delimiter))
-                        (input (readline prompt) passphrase))))
-                )
-              (begin
-                (format #t "Invalid key, please try again~%")
-                (input (readline prompt) passphrase))))))))
+              (let ((passphrases
+                     (vector-map (lambda (i passphrase)
+                                   (and-let* ((hash (diceware-hash (vector-ref dicewares i)))
+                                              (word (vhash-assoc key hash string=? string-hash)))
+                                     `(,@passphrase ,(cdr word))))
+                                 passphrases)))
+                (vector-for-each
+                 (lambda (i passphrase)
+                   (when (not (null? passphrase))
+                     (format #t "[ ~a ] Current passphrase: ~a~%"
+                             (vector-ref padded-names i)
+                             (string-join passphrase delimiter))))
+                 passphrases)
+                (input (readline "-- Next number: ") passphrases))
+              (input (readline "EE Invalid key, please try again: ") passphrases)))))))
