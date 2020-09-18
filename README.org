@@ -2,3 +2,38 @@
 
 #+TITLE: README for Guile Diceware
 
+Generating a passphrase using the [[http://world.std.com/~reinhold/diceware.html][diceware]] method, all you need is a
+die or five.
+
+See [[HACKING]] on how to build diceware.
+
+## Example
+
+Here is how it looks when generating a weak three word passphrase
+using the [[https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt][EFF wordlist]], the [[http://world.std.com/%7Ereinhold/diceware.wordlist.asc][Diceware list]] and the
+[[http://world.std.com/%7Ereinhold/beale.wordlist.asc][alternative Baele list]].
+
+
+```
+$ ./pre-inst-env scripts/diceware ~/Downloads/eff_large_wordlist.txt ~/Downloads/diceware.wordlist.asc  ~/Downloads/beale.wordlist.asc 
+Welcome to diceware (press Ctrl+d to exit)
+
+-- Please roll five dice and type in the number: 31434
+[ eff_large_wordlist.txt ] Current passphrase: freebee
+[  diceware.wordlist.asc ] Current passphrase: goode
+[     beale.wordlist.asc ] Current passphrase: grady
+-- Next number: 14236
+[ eff_large_wordlist.txt ] Current passphrase: freebee brought
+[  diceware.wordlist.asc ] Current passphrase: goode bird
+[     beale.wordlist.asc ] Current passphrase: grady bits
+-- Next number: 13426
+[ eff_large_wordlist.txt ] Current passphrase: freebee brought bleep
+[  diceware.wordlist.asc ] Current passphrase: goode bird batik
+[     beale.wordlist.asc ] Current passphrase: grady bits bay
+-- Next number: 
+
+Your passphrase using eff_large_wordlist.txt is "freebee brought bleep"
+Your passphrase using diceware.wordlist.asc is "goode bird batik"
+Your passphrase using beale.wordlist.asc is "grady bits bay"
+```
+
