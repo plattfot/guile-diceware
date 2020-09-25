@@ -93,6 +93,12 @@ Author:
                      (close-port port)
                      (make-diceware (basename filename) vhash)))
                  (option-ref options '() '())))))
+      (when (= (vector-length dicewares) 0)
+        (format #t "\
+Please specify at least one wordlist.
+Try 'diceware --help' for more information.
+")
+        (exit 1))
       (format #t "Welcome to diceware (press Ctrl+d to exit)~%~%")
       (let* ((valid-key (make-regexp "^[1-6]{5}$"))
              (delimiter (option-ref options 'delimiter " "))
