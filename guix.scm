@@ -12,8 +12,8 @@
 
 (package
   (name "guile-diceware")
-  (version "0.1")
-  (source "./guile-diceware-0.1.tar.gz")
+  (version "0.1.1")
+  (source "./guile-diceware-0.1.1.tar.gz")
   (build-system gnu-build-system)
   (arguments
     `(#:modules

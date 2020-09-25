@@ -1,7 +1,7 @@
 (hall-description
   (name "diceware")
   (prefix "guile")
-  (version "0.1")
+  (version "0.1.1")
   (author "Fredrik Salomonsson")
   (copyright (2020))
   (synopsis "")
